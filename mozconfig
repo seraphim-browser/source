@@ -1,0 +1,15 @@
+# Enable debugging symbols
+ac_add_options --enable-debug
+
+# Set the application name to Seraphim (custom branding)
+export MOZ_APP_NAME=seraphim-browser
+export MOZ_APP_PROFILE="Seraphim Browser"
+# export MOZ_BRANDING_DIRECTORY=browser/branding/seraphim
+
+# Optimize for faster builds (or add optimization flags)
+mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/obj-builds
+
+# Enable certain features
+ac_add_options --enable-application=browser
+ac_add_options --enable-optimize 
+# ac_add_options --enable-official_branding
