@@ -27,7 +27,7 @@ jobs:
       - name: Copy files
         run: 
           cp source/seraphim.cfg target/
-          cp -R source/defaults/pref/ target/defaults/pref/
+          cp -R source/defaults/pref/ target/
           cp -R source/distribution target/
 
       - name: Commit and push changes
