@@ -31,7 +31,7 @@ jobs:
           cp -R source/distribution target/
 
       - name: Commit and push changes
-        run:
+        run: |
           cd target
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
