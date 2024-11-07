@@ -1,0 +1,28 @@
+name: Upstream Sync
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs daily at midnight UTC
+
+jobs:
+  check-and-sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout forked repository
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add upstream repository
+        run: |
+          git remote add upstream https://github.com/mozilla/gecko-dev.git
+          git fetch upstream
+          git checkout main
+          
+      - name: Sync with upstream
+        run: |
+          if [ $(git rev-parse HEAD) != $(git rev-parse upstream/main) ]; then
+            git merge upstream/main || true
+            git push origin main
+          fi
