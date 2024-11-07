@@ -18,6 +18,6 @@ jobs:
       - name: Sync with upstream
         run: |
           if [ $(git rev-parse HEAD) != $(git rev-parse upstream/main) ]; then
-            git merge upstream/main || true
-            git push origin main
+            git merge upstream/master || true
+            git push origin master
           fi
