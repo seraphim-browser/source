@@ -25,10 +25,10 @@ jobs:
           path: target
 
       - name: Copy files
-        run: 
+        run: |
           cp source/seraphim.cfg target/
-          cp -R source/defaults/pref/ target
-          cp -R source/distribution target
+          cp -R source/defaults/pref/ target/
+          cp -R source/distribution target/
 
       - name: Commit and push changes
         run:
