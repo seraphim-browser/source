@@ -17,7 +17,7 @@ jobs:
 
       - name: Fetch upstream repository
         run: |
-          git fetch upstream --all
+          git fetch upstream
 
       - name: Rebase with upstream
         run: |
