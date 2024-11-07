@@ -1,0 +1,86 @@
+name: Build Seraphim
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Allows manual run
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        # You can specify additional configurations here if needed.
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up dependencies for Firefox build (Linux/Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential autoconf2.13 python3-pip clang wget unzip zip
+          sudo pip3 install mozbuild
+
+      - name: Set up dependencies for Firefox build (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install autoconf python3 clang wget unzip zip
+          pip3 install mozbuild
+
+      - name: Set up dependencies for Firefox build (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install python3 mingw git
+          pip install mozbuild
+
+      - name: Build Seraphim (Linux/Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          ./mach build
+          mkdir -p dist  # Example: Ensure there's a dist folder where build artifacts go
+          cp -R /obj-x86_64-pc-linux*/dist/* dist/  # Adjust this to copy the right files
+
+      - name: Build Seraphim (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          ./mach build
+          mkdir -p dist  # Example: Ensure there's a dist folder where build artifacts go
+          cp -R obj-x86_64-apple-darwin*/dist/* dist/  # Adjust this to copy the right files
+
+      - name: Build Seraphim (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          ./mach build
+          mkdir -p dist  # Example: Ensure there's a dist folder where build artifacts go
+          cp -R obj-x86_64-pc-mingw32/dist/* dist/  # Adjust this to copy the right files
+      
+      - name: Archive the build artifacts
+        if: success()
+        uses: actions/upload-artifact@v3
+        with:
+          name: seraphim-build
+          path: dist/  # Path to the build artifacts
+
+      - name: Checkout the target repository (where the build will be stored)
+        uses: actions/checkout@v3
+        with:
+          repository: seraphim-browser/build  
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: target-repository  # Folder to check out the target repo into
+
+      - name: Copy build files to the target repository
+        run: |
+          cp -R dist/* target-repository/  # Copy the build files into the target repository
+
+      - name: Commit and push changes to the target repository
+        run: |
+          cd target-repository
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Add built Seraphim files"
+          git push
