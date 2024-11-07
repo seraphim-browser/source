@@ -13,14 +13,14 @@ jobs:
       - name: Checkout source repository
         uses: actions/checkout@v3
         with:
-          repository: https://github.com/seraphim-browser/settings
+          repository: seraphim-browser/settings
           token: ${{ secrets.GITHUB_TOKEN }}
           path: source
       
       - name: Checkout target repository
         uses: actions/checkout@v3
         with:
-          repository: https://github.com/seraphim-browser/source
+          repository: seraphim-browser/source
           token: ${{ secrets.GITHUB_TOKEN }}
           path: target
 
