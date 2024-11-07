@@ -3,7 +3,7 @@ name: Apply Custom Settings for Seraphim
 on:
   push:
     branches:
-      - main # Applies settings automatically whenever there is a push to main
+      - master # Applies settings automatically whenever there is a push to main
 
 jobs:
   copy-files: 
