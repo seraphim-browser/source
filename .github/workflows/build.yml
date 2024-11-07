@@ -24,19 +24,19 @@ jobs:
           sudo apt update
           sudo apt install -y build-essential autoconf2.13 python3-pip clang wget unzip zip
           # Install mozbuild directly from GitHub
-          sudo pip3 install git+https://github.com/mozilla/mozbuild.git
+          sudo pip3 install git+mozilla/mozbuild.git
 
       - name: Set up dependencies for Firefox build (macOS)
         if: matrix.os == 'macos-latest'
         run: |
           brew install autoconf python3 clang wget unzip zip
-          pip3 install git+https://github.com/mozilla/mozbuild.git
+          pip3 install git+mozilla/mozbuild.git
 
       - name: Set up dependencies for Firefox build (Windows)
         if: matrix.os == 'windows-latest'
         run: |
           choco install python3 mingw git
-          pip install git+https://github.com/mozilla/mozbuild.git
+          pip install git+mozilla/mozbuild.git
 
       - name: Build Seraphim (Linux/Ubuntu)
         if: matrix.os == 'ubuntu-latest'
