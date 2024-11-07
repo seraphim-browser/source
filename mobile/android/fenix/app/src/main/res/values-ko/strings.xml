@@ -14,6 +14,8 @@
     <string name="content_description_private_browsing_button">사생활 보호 모드 활성화</string>
     <!-- Content description (not visible, for screen readers etc.): "Private Browsing" menu button. -->
     <string name="content_description_disable_private_browsing_button">사생활 보호 모드 비활성화</string>
+    <!-- Content description (not visible, for screen readers etc.): "Private Browsing" menu button. -->
+    <string name="content_description_private_browsing">사생활 보호 모드</string>
     <!-- Placeholder text shown in the search bar before a user enters text for the default engine -->
     <string name="search_hint">검색어 또는 주소 입력</string>
 
@@ -232,6 +234,8 @@
     <string name="browser_menu_discover_more_extensions">더 많은 확장  기능 살펴보기</string>
     <!-- Browser menu description that is shown when one or more extensions are disabled due to extension errors -->
     <string name="browser_menu_extensions_disabled_description">일시적으로 비활성화됨</string>
+    <!-- The description of the browser menu appears when the user hasn't installed any extensions. -->
+    <string name="browser_menu_no_extensions_installed_description">사용중인 확장 기능 없음</string>
     <!-- Browser menu button that opens account settings -->
     <string name="browser_menu_account_settings">계정 정보</string>
     <!-- Browser menu button that sends a user to help articles -->
@@ -1250,6 +1254,22 @@
     <!-- Text for the button to remove a single download item -->
     <string name="download_delete_item_1">삭제</string>
 
+
+    <!-- WebCompat Reporter -->
+
+    <!-- These reason strings are dropdown options on a WebCompat reporter form, indicating what is broken on the site. -->
+    <!-- Broken site reason text for site slow or not working -->
+    <string name="webcompat_reporter_reason_slow">사이트가 느리거나 작동하지 않음</string>
+    <!-- Broken site reason text for images or videos -->
+    <string name="webcompat_reporter_reason_media">이미지 또는 동영상</string>
+    <!-- Broken site reason text for buttons, links, and other content -->
+    <string name="webcompat_reporter_reason_content">버튼, 링크 및 기타 콘텐츠</string>
+    <!-- Broken site reason text for sign in or sign out -->
+    <string name="webcompat_reporter_reason_account">로그인 또는 로그아웃</string>
+    <!-- Broken site reason text for ad blocker -->
+    <string name="webcompat_reporter_reason_ad_blocker">광고 차단기</string>
+    <!-- Broken site reason text for something else -->
+    <string name="webcompat_reporter_reason_other">기타</string>
 
     <!-- Crashes -->
     <!-- Title text displayed on the tab crash page. This first parameter is the name of the application (For example: Fenix) -->

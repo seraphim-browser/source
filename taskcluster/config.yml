@@ -7,7 +7,6 @@ project-repo-param-prefix: ''
 product-dir: 'browser'
 treeherder:
     group-names:
-        'cram': 'Cram tests'
         'js-bench-sm': 'JavaScript shell benchmarks with Spidermonkey'
         'js-bench-v8': 'JavaScript shell benchmarks with Google V8'
         'node': 'Node tests'
@@ -25,6 +24,7 @@ treeherder:
         'Btime-live-nofis-fenix': 'Browsertime tests on Fenix without fission enabled using live sites'
         'Btime-nofis-fenix': 'Browsertime tests on Fenix without fission enabled'
         'Btime-webext-nofis-fenix': 'Browsertime performance tests on Fenix with extensions and without fission enabled'
+        'Btime-webext-fenix': 'Browsertime performance tests on Fenix with extensions'
         'Btime-webext': 'Browsertime performance tests on Firefox with extensions'
         'Btime-live-nofis': 'Browsertime tests on Firefox without fission enabled using live sites'
         'Btime-nofis-refbrow': 'Browsertime tests on reference browser without fission enabled'
@@ -274,7 +274,6 @@ treeherder:
         'perftest-http3': 'Performance tests with HTTP/3'
         'perftest-fenix': 'Performance tests using Fenix'
         'l10n': 'Localization checks'
-        'fxrec': 'Desktop startup recorder (fxrecord)'
         'wc': 'webcompat'
         'Boot': 'Bootstrap'
         'Attr-L10n': 'Build Attribution'
@@ -743,6 +742,11 @@ workers:
             implementation: generic-worker
             os: windows
             worker-type: '{alias}'
+        b-win-aarch64:
+            provisioner: '{trust-domain}-{level}'
+            implementation: generic-worker
+            os: windows
+            worker-type: 'win11-a64-24h2-builder'
         image:
             provisioner: '{trust-domain}-{level}'
             implementation: docker-worker

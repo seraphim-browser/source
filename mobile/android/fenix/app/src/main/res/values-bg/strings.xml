@@ -14,6 +14,8 @@
     <string name="content_description_private_browsing_button">Включване на поверително разглеждане</string>
     <!-- Content description (not visible, for screen readers etc.): "Private Browsing" menu button. -->
     <string name="content_description_disable_private_browsing_button">Изключване на поверително разглеждане</string>
+    <!-- Content description (not visible, for screen readers etc.): "Private Browsing" menu button. -->
+    <string name="content_description_private_browsing">Поверително разглеждане</string>
     <!-- Placeholder text shown in the search bar before a user enters text for the default engine -->
     <string name="search_hint">Търсете или въведете адрес</string>
     <!-- Placeholder text shown in the search bar before a user enters text for a general engine -->
@@ -224,6 +226,8 @@
     <string name="browser_menu_discover_more_extensions">Открийте още разширения</string>
     <!-- Browser menu description that is shown when one or more extensions are disabled due to extension errors -->
     <string name="browser_menu_extensions_disabled_description">Временно забранено</string>
+    <!-- The description of the browser menu appears when the user hasn't installed any extensions. -->
+    <string name="browser_menu_no_extensions_installed_description">Няма активирани разширения</string>
     <!-- Browser menu button that opens account settings -->
     <string name="browser_menu_account_settings">Информация за профила</string>
     <!-- Browser menu button that sends a user to help articles -->
@@ -1227,6 +1231,22 @@
     <!-- Text for the button to remove a single download item -->
     <string name="download_delete_item_1">Премахване</string>
 
+
+    <!-- WebCompat Reporter -->
+
+    <!-- These reason strings are dropdown options on a WebCompat reporter form, indicating what is broken on the site. -->
+    <!-- Broken site reason text for site slow or not working -->
+    <string name="webcompat_reporter_reason_slow">Сайтът е бавен или не работи</string>
+    <!-- Broken site reason text for images or videos -->
+    <string name="webcompat_reporter_reason_media">Изображения или видеоклипове</string>
+    <!-- Broken site reason text for buttons, links, and other content -->
+    <string name="webcompat_reporter_reason_content">Бутони, връзки и друго съдържание</string>
+    <!-- Broken site reason text for sign in or sign out -->
+    <string name="webcompat_reporter_reason_account">Вписване или излизане</string>
+    <!-- Broken site reason text for ad blocker -->
+    <string name="webcompat_reporter_reason_ad_blocker">Блокиране на реклами</string>
+    <!-- Broken site reason text for something else -->
+    <string name="webcompat_reporter_reason_other">Нещо друго</string>
 
     <!-- Crashes -->
     <!-- Title text displayed on the tab crash page. This first parameter is the name of the application (For example: Fenix) -->

@@ -73,6 +73,7 @@
 
 #ifdef XP_WIN
 #  include "mozilla/PreXULSkeletonUI.h"
+#  include "mozilla/WindowsVersion.h"
 #  include "nsIWindowsUIUtils.h"
 #endif
 
@@ -1232,7 +1233,7 @@ static Maybe<int32_t> ReadSize(const Element& aElement, nsAtom* aAttr,
   int32_t max = ReadIntAttribute(aElement, aMaxAttr)
                     .valueOr(std::numeric_limits<int32_t>::max());
 
-  return Some(std::min(max, std::max(*attr, min)));
+  return Some(std::clamp(*attr, min, max));
 }
 
 bool AppWindow::LoadSizeFromXUL(int32_t& aSpecWidth, int32_t& aSpecHeight) {
@@ -1812,13 +1813,17 @@ nsresult AppWindow::MaybeSaveEarlyWindowPersistentValues(
   settings.rtlEnabled = intl::LocaleService::GetInstance()->IsAppLocaleRTL();
 
   bool isInTabletMode = false;
-  bool autoTouchModePref =
+  bool const autoTouchModePref =
       Preferences::GetBool("browser.touchmode.auto", false);
   if (autoTouchModePref) {
     nsCOMPtr<nsIWindowsUIUtils> uiUtils(
         do_GetService("@mozilla.org/windows-ui-utils;1"));
     if (!NS_WARN_IF(!uiUtils)) {
-      uiUtils->GetInTabletMode(&isInTabletMode);
+      if (IsWin11OrLater()) {
+        uiUtils->GetInWin11TabletMode(&isInTabletMode);
+      } else {
+        uiUtils->GetInWin10TabletMode(&isInTabletMode);
+      }
     }
   }
 

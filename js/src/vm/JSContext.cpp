@@ -814,18 +814,17 @@ JS_PUBLIC_API void js::RunJobs(JSContext* cx) {
   JS::ClearKeptObjects(cx);
 }
 
-JSObject* InternalJobQueue::getIncumbentGlobal(JSContext* cx) {
-  if (!cx->compartment()) {
-    return nullptr;
-  }
-  return cx->global();
+bool InternalJobQueue::getHostDefinedData(
+    JSContext* cx, JS::MutableHandle<JSObject*> data) const {
+  data.set(nullptr);
+  return true;
 }
 
 bool InternalJobQueue::enqueuePromiseJob(JSContext* cx,
                                          JS::HandleObject promise,
                                          JS::HandleObject job,
                                          JS::HandleObject allocationSite,
-                                         JS::HandleObject incumbentGlobal) {
+                                         JS::HandleObject hostDefinedData) {
   MOZ_ASSERT(job);
   if (!queue.pushBack(job)) {
     ReportOutOfMemory(cx);
@@ -972,7 +971,6 @@ JSContext::JSContext(JSRuntime* runtime, const JS::ContextOptions& options)
       isolate(this, nullptr),
       activation_(this, nullptr),
       profilingActivation_(nullptr),
-      entryMonitor(this, nullptr),
       noExecuteDebuggerTop(this, nullptr),
 #ifdef JS_CHECK_UNSAFE_CALL_WITH_ABI
       inUnsafeCallWithABI(this, false),

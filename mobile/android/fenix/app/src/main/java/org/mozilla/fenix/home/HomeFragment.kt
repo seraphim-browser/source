@@ -98,6 +98,7 @@ import mozilla.telemetry.glean.private.NoExtras
 import org.mozilla.fenix.BrowserDirection
 import org.mozilla.fenix.GleanMetrics.HomeScreen
 import org.mozilla.fenix.GleanMetrics.Homepage
+import org.mozilla.fenix.GleanMetrics.Metrics
 import org.mozilla.fenix.GleanMetrics.NavigationBar
 import org.mozilla.fenix.GleanMetrics.PrivateBrowsingShortcutCfr
 import org.mozilla.fenix.HomeActivity
@@ -562,7 +563,12 @@ class HomeFragment : Fragment() {
                 reinitializeNavBar = ::reinitializeNavBar,
                 reinitializeMicrosurveyPrompt = { initializeMicrosurveyPrompt() },
             )
-            toolbarView?.updateButtonVisibility(requireComponents.core.store.state)
+            context?.shouldAddNavigationBar()?.let {
+                toolbarView?.updateButtonVisibility(
+                    requireComponents.core.store.state,
+                    it,
+                )
+            }
         }
 
         // If the microsurvey feature is visible, we should update it's state.
@@ -619,10 +625,12 @@ class HomeFragment : Fragment() {
                         val shouldShowNavBarCFR =
                             context.shouldAddNavigationBar() && context.settings().shouldShowNavigationBarCFR
                         val shouldShowMicrosurveyPrompt = !activity.isMicrosurveyPromptDismissed.value
+                        var isMicrosurveyShown = false
 
                         if (shouldShowMicrosurveyPrompt && !shouldShowNavBarCFR) {
                             currentMicrosurvey
                                 ?.let {
+                                    isMicrosurveyShown = true
                                     if (isToolbarAtBottom) {
                                         updateToolbarViewUIForMicrosurveyPrompt()
                                     }
@@ -659,11 +667,6 @@ class HomeFragment : Fragment() {
 
                         if (isToolbarAtBottom) {
                             AndroidView(factory = { _ -> binding.toolbarLayout })
-                        } else if (
-                            currentMicrosurvey == null ||
-                            (shouldShowMicrosurveyPrompt && !shouldShowNavBarCFR)
-                        ) {
-                            Divider()
                         }
 
                         val showCFR =
@@ -747,6 +750,7 @@ class HomeFragment : Fragment() {
 
                             HomeNavBar(
                                 isPrivateMode = activity.browsingModeManager.mode.isPrivate,
+                                showDivider = !isMicrosurveyShown,
                                 browserStore = context.components.core.store,
                                 menuButton = menuButton,
                                 tabsCounterMenu = tabCounterMenu,
@@ -886,11 +890,6 @@ class HomeFragment : Fragment() {
 
                         if (isToolbarAtTheBottom) {
                             AndroidView(factory = { _ -> binding.toolbarLayout })
-                        } else if (
-                            currentMicrosurvey == null ||
-                            (shouldShowMicrosurveyPrompt && !shouldShowNavBarCFR)
-                        ) {
-                            Divider()
                         }
                     }
                 }
@@ -903,11 +902,16 @@ class HomeFragment : Fragment() {
     }
 
     private fun resetToolbarViewUI() {
+        val elevation = if (context?.settings()?.navigationToolbarEnabled == true) {
+            0f
+        } else {
+            requireContext().resources.getDimension(R.dimen.browser_fragment_toolbar_elevation)
+        }
         _binding?.homeLayout?.removeView(bottomToolbarContainerView.toolbarContainerView)
         updateToolbarViewUI(
             R.drawable.home_bottom_bar_background,
             View.VISIBLE,
-            requireContext().resources.getDimension(R.dimen.browser_fragment_toolbar_elevation),
+            elevation,
         )
     }
 
@@ -1224,6 +1228,7 @@ class HomeFragment : Fragment() {
                         onPrivateModeToggleClick = { mode ->
                             browsingModeManager.mode = mode
                         },
+                        onTabCounterClick = { openTabsTray() },
                     )
                 }
             }
@@ -1552,7 +1557,12 @@ class HomeFragment : Fragment() {
     private fun openTabsTray() {
         findNavController().nav(
             R.id.homeFragment,
-            HomeFragmentDirections.actionGlobalTabsTrayFragment(),
+            HomeFragmentDirections.actionGlobalTabsTrayFragment(
+                page = when (browsingModeManager.mode) {
+                    BrowsingMode.Normal -> Page.NormalTabs
+                    BrowsingMode.Private -> Page.PrivateTabs
+                },
+            ),
         )
     }
 
@@ -1643,10 +1653,11 @@ class HomeFragment : Fragment() {
 
     @VisibleForTesting
     internal fun showSetAsDefaultBrowserPrompt() {
-        val settings = requireContext().settings()
-        settings.setAsDefaultPromptCalled()
-
-        activity?.openSetDefaultBrowserOption()
+        requireComponents.appStore.dispatch(AppAction.UpdateWasNativeDefaultBrowserPromptShown(true))
+        activity?.openSetDefaultBrowserOption().also {
+            Metrics.setAsDefaultBrowserNativePromptShown.record()
+            requireContext().settings().setAsDefaultPromptCalled()
+        }
     }
 
     companion object {

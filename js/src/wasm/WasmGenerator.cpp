@@ -518,7 +518,7 @@ bool ModuleGenerator::linkCompiledCode(CompiledCode& code) {
       return false;
     }
 
-    masm_->patchMove32(offset, int32_t(callRefMetricOffset));
+    masm_->patchMove32(offset, Imm32(int32_t(callRefMetricOffset)));
   }
 
   for (const CodeLabel& codeLabel : code.codeLabels) {
@@ -977,10 +977,9 @@ UniqueCodeBlock ModuleGenerator::finishCodeBlock(UniqueLinkData* linkData) {
     // GC here as we may be running in OOL-code that is not ready for a GC.
     uint8_t* codeStart = nullptr;
     uint32_t codeLength = 0;
-    uint32_t metadataBias = 0;
-    codeBlock_->segment = CodeSegment::createFromMasmWithBumpAlloc(
-        *masm_, *linkData_, partialTieringCode_, /* allowLastDitchGC = */ false,
-        &codeStart, &codeLength, &metadataBias);
+    codeBlock_->segment = partialTieringCode_->createFuncCodeSegmentFromPool(
+        *masm_, *linkData_, /* allowLastDitchGC = */ false, &codeStart,
+        &codeLength);
     if (!codeBlock_->segment) {
       warnf("failed to allocate executable memory for module");
       return nullptr;
@@ -988,11 +987,11 @@ UniqueCodeBlock ModuleGenerator::finishCodeBlock(UniqueLinkData* linkData) {
     codeBlock_->codeBase = codeStart;
     codeBlock_->codeLength = codeLength;
 
-    // In `codeBlock_`s metadata, we have a bunch of offsets which are
-    // relative to the start of the segment.  But we're placing the code at
-    // `metadataBias` forwards from the start of the segment, so we have to
-    // swizzle the metadata offsets accordingly.
-    codeBlock_->offsetMetadataBy(metadataBias);
+    // All metadata in code block is relative to the start of the code segment
+    // we were placed in, so we must adjust offsets for where we were
+    // allocated.
+    uint32_t codeBlockOffset = codeStart - codeBlock_->segment->base();
+    codeBlock_->offsetMetadataBy(codeBlockOffset);
   } else {
     // Create a new CodeSegment for the code and use that.
     codeBlock_->segment = CodeSegment::createFromMasm(
@@ -1091,7 +1090,7 @@ bool ModuleGenerator::prepareTier1() {
 
 bool ModuleGenerator::startCompleteTier() {
 #ifdef JS_JITSPEW
-  JS_LOG(wasmCodeMetaStats, mozilla::LogLevel::Info,
+  JS_LOG(wasmPerf, mozilla::LogLevel::Info,
          "CM=..%06lx  MG::startCompleteTier (%s, %u imports, %u functions)",
          (unsigned long)(uintptr_t(codeMeta_) & 0xFFFFFFL),
          tier() == Tier::Baseline ? "BL" : "OPT",
@@ -1120,7 +1119,7 @@ bool ModuleGenerator::startCompleteTier() {
   // shrinkStorageToFit calls at the end will trim off unneeded capacity.
 
   size_t codeSectionSize =
-      codeMeta_->codeSection ? codeMeta_->codeSection->size : 0;
+      codeMeta_->codeSectionRange ? codeMeta_->codeSectionRange->size : 0;
 
   size_t estimatedCodeSize =
       size_t(1.2 * EstimateCompiledCodeSize(tier(), codeSectionSize));
@@ -1183,7 +1182,7 @@ bool ModuleGenerator::startPartialTier(uint32_t funcIndex) {
   uint32_t bytecodeLen =
       codeMeta_->funcDefRanges[funcIndex - codeMeta_->numFuncImports]
           .bodyLength;
-  JS_LOG(wasmCodeMetaStats, mozilla::LogLevel::Info,
+  JS_LOG(wasmPerf, mozilla::LogLevel::Info,
          "CM=..%06lx  MG::startPartialTier  fI=%-5u  sz=%-5u  %s",
          (unsigned long)(uintptr_t(codeMeta_) & 0xFFFFFFL), funcIndex,
          bytecodeLen, name.length() > 0 ? name.begin() : "(unknown-name)");
@@ -1323,10 +1322,25 @@ SharedModule ModuleGenerator::finishModule(
 
   // We keep the bytecode alive for debuggable modules, or if we're doing
   // partial tiering.
-  if (debugEnabled() || mode() == CompileMode::LazyTiering) {
-    codeMeta->bytecode = &bytecode;
-  } else {
-    codeMeta->bytecode = nullptr;
+  if (debugEnabled()) {
+    MOZ_ASSERT(mode() != CompileMode::LazyTiering);
+    codeMeta->debugBytecode = &bytecode;
+  } else if (mode() == CompileMode::LazyTiering) {
+    MutableBytes codeSectionBytecode = js_new<ShareableBytes>();
+    if (!codeSectionBytecode) {
+      return nullptr;
+    }
+
+    if (codeMeta->codeSectionRange) {
+      const uint8_t* codeSectionStart =
+          bytecode.begin() + codeMeta->codeSectionRange->start;
+      if (!codeSectionBytecode->append(codeSectionStart,
+                                       codeMeta->codeSectionRange->size)) {
+        return nullptr;
+      }
+    }
+
+    codeMeta->codeSectionBytecode = codeSectionBytecode;
   }
 
   // Store a reference to the name section on the code metadata
@@ -1356,6 +1370,16 @@ SharedModule ModuleGenerator::finishModule(
     for (const FuncDefRange& fr : codeMeta->funcDefRanges) {
       guard->completeBCSize += fr.bodyLength;
     }
+    // Now that we know the complete bytecode size for the module, we can set
+    // the inlining budget for tiered-up compilation, if appropriate.  See
+    // "[SMDOC] Per-function and per-module inlining limits" (WasmHeuristics.h)
+    guard->inliningBudget =
+        mode() == CompileMode::LazyTiering
+            ? int64_t(guard->completeBCSize) * PerModuleMaxInliningRatio
+            : 0;
+    // But don't be overly stingy for tiny modules.  Function-level inlining
+    // limits will still protect us from excessive inlining.
+    guard->inliningBudget = std::max<int64_t>(guard->inliningBudget, 1000);
   }
 
   MutableCode code = js_new<Code>(mode(), *codeMeta_, codeMetaForAsmJS_);
@@ -1419,7 +1443,7 @@ SharedModule ModuleGenerator::finishModule(
   }
 
 #ifdef JS_JITSPEW
-  JS_LOG(wasmCodeMetaStats, mozilla::LogLevel::Info,
+  JS_LOG(wasmPerf, mozilla::LogLevel::Info,
          "CM=..%06lx  MG::finishModule      (%s, complete tier)",
          (unsigned long)(uintptr_t(codeMeta_) & 0xFFFFFFL),
          tier() == Tier::Baseline ? "BL" : "OPT");

@@ -767,6 +767,13 @@ bool SVGContentUtils::ParseNumber(nsAString::const_iterator& aIter,
   return ::StringToValue(Substring(start, aIter), aValue);
 }
 
+template bool SVGContentUtils::ParseNumber<float>(
+    nsAString::const_iterator& aIter, const nsAString::const_iterator& aEnd,
+    float& aValue);
+template bool SVGContentUtils::ParseNumber<double>(
+    nsAString::const_iterator& aIter, const nsAString::const_iterator& aEnd,
+    double& aValue);
+
 template <class floatType>
 bool SVGContentUtils::ParseNumber(const nsAString& aString, floatType& aValue) {
   nsAString::const_iterator iter, end;
@@ -806,9 +813,9 @@ bool SVGContentUtils::ParseInteger(nsAString::const_iterator& aIter,
   } while (iter != aEnd && mozilla::IsAsciiDigit(*iter));
 
   aIter = iter;
-  aValue = int32_t(clamped(sign * value,
-                           int64_t(std::numeric_limits<int32_t>::min()),
-                           int64_t(std::numeric_limits<int32_t>::max())));
+  aValue = int32_t(std::clamp(sign * value,
+                              int64_t(std::numeric_limits<int32_t>::min()),
+                              int64_t(std::numeric_limits<int32_t>::max())));
   return true;
 }
 

@@ -209,6 +209,7 @@ tur.ar
 // Confirmed by registry <iana-questions@icann.org> 2008-06-18
 arpa
 e164.arpa
+home.arpa
 in-addr.arpa
 ip6.arpa
 iris.arpa
@@ -6719,7 +6720,7 @@ org.zw
 
 // newGTLDs
 
-// List of new gTLDs imported from https://www.icann.org/resources/registries/gtlds/v2/gtlds.json on 2024-10-17T15:16:23Z
+// List of new gTLDs imported from https://www.icann.org/resources/registries/gtlds/v2/gtlds.json on 2024-10-31T15:17:42Z
 // This list is auto-generated, don't edit it manually.
 // aaa : American Automobile Association, Inc.
 // https://www.iana.org/domains/root/db/aaa.html
@@ -10065,7 +10066,7 @@ ski
 // https://www.iana.org/domains/root/db/skin.html
 skin
 
-// sky : Sky International AG
+// sky : Sky UK Limited
 // https://www.iana.org/domains/root/db/sky.html
 sky
 
@@ -12388,10 +12389,12 @@ cloudns.ch
 cloudns.cl
 cloudns.club
 dnsabr.com
+ip-ddns.com
 cloudns.cx
 cloudns.eu
 cloudns.in
 cloudns.info
+ddns-ip.net
 dns-cloud.net
 dns-dynamic.net
 cloudns.nz
@@ -12646,10 +12649,6 @@ jozi.biz
 // DNShome : https://www.dnshome.de/
 // Submitted by Norbert Auler <mail@dnshome.de>
 dnshome.de
-
-// dnstrace.pro : https://dnstrace.pro/
-// Submitted by Chris Partridge <chris@partridge.tech>
-bci.dnstrace.pro
 
 // DotArai : https://www.dotarai.com/
 // Submitted by Atsadawat Netcharadsang <atsadawat@dotarai.co.th>
@@ -13006,11 +13005,6 @@ easypanel.host
 // EasyWP : https://www.easywp.com
 // Submitted by <infracloudteam@namecheap.com>
 *.ewp.live
-
-// ECG Robotics, Inc : https://ecgrobotics.org
-// Submitted by <frc1533@ecgrobotics.org>
-onred.one
-staging.onred.one
 
 // eDirect Corp. : https://hosting.url.com.tw/
 // Submitted by C.S. chang <cschang@corp.url.com.tw>
@@ -13654,6 +13648,10 @@ london.cloudapps.digital
 // Government of the Netherlands: https://www.government.nl
 // Submitted by <domeinnaam@minaz.nl>
 gov.nl
+
+// Grafana Labs: https://grafana.com/
+// Submitted by Platform Engineering <info@grafana.com>
+grafana-dev.net
 
 // GrayJay Web Solutions Inc. : https://grayjaysports.ca
 // Submitted by Matt Yamkowy <info@grayjaysports.ca>
@@ -15371,6 +15369,10 @@ gdansk.pl
 gdynia.pl
 med.pl
 sopot.pl
+
+// Tave Creative Corp : https://tave.com/
+// Submitted by Adrian Ziemkowski <devops@tave.com>
+taveusercontent.com
 
 // tawk.to, Inc : https://www.tawk.to
 // Submitted by tawk.to developer team <dev-accounts@tawk.to>

@@ -7,6 +7,7 @@
 #include "WinUtils.h"
 
 #include <knownfolders.h>
+#include <Psapi.h>
 #include <winioctl.h>
 
 #include "gfxPlatform.h"
@@ -1583,9 +1584,8 @@ static bool IsTabletDevice() {
   // Guarantees that:
   // - The device has a touch screen.
   // - It is used as a tablet which means that it has no keyboard connected.
-  // On Windows 10 it means that it is verifying with ConvertibleSlateMode.
 
-  if (WindowsUIUtils::GetInTabletMode()) {
+  if (WindowsUIUtils::GetInWin10TabletMode()) {
     return true;
   }
 
@@ -2194,6 +2194,23 @@ const char* WinUtils::WinEventToEventName(UINT msg) {
   return eventMsgInfo != mozilla::widget::gAllEvents.end()
              ? eventMsgInfo->second.mStr
              : nullptr;
+}
+
+nsresult WinUtils::GetProcessImageName(DWORD aProcessId, nsAString& aName) {
+  nsAutoHandle procHandle(
+      ::OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, aProcessId));
+  if (!procHandle) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  wchar_t path[MAX_PATH] = {L'\0'};
+  auto len = ::GetProcessImageFileNameW(procHandle, path, std::size(path));
+  if (!len) {
+    return NS_ERROR_FAILURE;
+  }
+
+  aName = path;
+  return NS_OK;
 }
 
 // Note to testers and/or test-authors: on Windows 10, and possibly on other

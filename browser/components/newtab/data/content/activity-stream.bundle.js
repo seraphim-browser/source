@@ -2693,13 +2693,14 @@ const ANIMATION_DURATION = 3000;
 const DSMessageLabel = props => {
   const {
     context,
-    context_type
+    context_type,
+    mayHaveSectionsCards
   } = props;
   const {
     icon,
     fluentID
   } = cardContextTypes[context_type] || {};
-  if (!context && context_type) {
+  if (!context && context_type && !mayHaveSectionsCards) {
     return /*#__PURE__*/external_React_default().createElement(external_ReactTransitionGroup_namespaceObject.TransitionGroup, {
       component: null
     }, /*#__PURE__*/external_React_default().createElement(external_ReactTransitionGroup_namespaceObject.CSSTransition, {
@@ -2770,7 +2771,8 @@ class DSContextFooter extends (external_React_default()).PureComponent {
       cta_button_variant,
       source,
       spocMessageVariant,
-      dispatch
+      dispatch,
+      mayHaveSectionsCards
     } = this.props;
     const sponsorLabel = SponsorLabel({
       sponsored_by_override,
@@ -2779,7 +2781,8 @@ class DSContextFooter extends (external_React_default()).PureComponent {
     });
     const dsMessageLabel = DSMessageLabel({
       context,
-      context_type
+      context_type,
+      mayHaveSectionsCards
     });
     if (cta_button_variant === "variant-a") {
       return /*#__PURE__*/external_React_default().createElement("div", {
@@ -2938,12 +2941,15 @@ const DefaultMeta = ({
   ctaButtonVariant,
   dispatch,
   spocMessageVariant,
+  mayHaveSectionsCards,
   mayHaveThumbsUpDown,
   onThumbsUpClick,
   onThumbsDownClick,
   isListCard,
   state,
-  format
+  format,
+  topic,
+  isSectionsCard
 }) => /*#__PURE__*/external_React_default().createElement("div", {
   className: "meta"
 }, /*#__PURE__*/external_React_default().createElement("div", {
@@ -2963,13 +2969,18 @@ const DefaultMeta = ({
   className: "title clamp"
 }, "Sponsored"), /*#__PURE__*/external_React_default().createElement("p", {
   className: "excerpt clamp"
-}, "Sponsored content supports our mission to build a better web."))), !isListCard && format !== "rectangle" && mayHaveThumbsUpDown && /*#__PURE__*/external_React_default().createElement(DSThumbsUpDownButtons, {
+}, "Sponsored content supports our mission to build a better web."))), !isListCard && format !== "rectangle" && !mayHaveSectionsCards && mayHaveThumbsUpDown && /*#__PURE__*/external_React_default().createElement(DSThumbsUpDownButtons, {
   onThumbsDownClick: onThumbsDownClick,
   onThumbsUpClick: onThumbsUpClick,
   sponsor: sponsor,
   isThumbsDownActive: state.isThumbsDownActive,
   isThumbsUpActive: state.isThumbsUpActive
-}), !newSponsoredLabel && /*#__PURE__*/external_React_default().createElement(DSContextFooter, {
+}), isSectionsCard && /*#__PURE__*/external_React_default().createElement("div", {
+  className: "sections-card-footer"
+}, /*#__PURE__*/external_React_default().createElement("span", {
+  className: "ds-card-topic",
+  "data-l10n-id": `newtab-topic-label-${topic}`
+})), !newSponsoredLabel && /*#__PURE__*/external_React_default().createElement(DSContextFooter, {
   context_type: context_type,
   context: context,
   sponsor: sponsor,
@@ -2977,7 +2988,8 @@ const DefaultMeta = ({
   cta_button_variant: ctaButtonVariant,
   source: source,
   dispatch: dispatch,
-  spocMessageVariant: spocMessageVariant
+  spocMessageVariant: spocMessageVariant,
+  mayHaveSectionsCards: mayHaveSectionsCards
 }), newSponsoredLabel && /*#__PURE__*/external_React_default().createElement(DSMessageFooter, {
   context_type: context_type,
   context: null,
@@ -3345,6 +3357,7 @@ class _DSCard extends (external_React_default()).PureComponent {
       saveToPocketCard,
       isListCard,
       isFakespot,
+      mayHaveSectionsCards,
       format,
       alt_text
     } = this.props;
@@ -3396,9 +3409,15 @@ class _DSCard extends (external_React_default()).PureComponent {
     const imageGradientClassName = imageGradient ? `ds-card-image-gradient` : ``;
     const listCardClassName = isListCard ? `list-feed-card` : ``;
     const fakespotClassName = isFakespot ? `fakespot` : ``;
+    const sectionsCardsClassName = mayHaveSectionsCards ? `sections-card-ui` : ``;
     const titleLinesName = `ds-card-title-lines-${titleLines}`;
     const descLinesClassName = `ds-card-desc-lines-${descLines}`;
-    const spocFormatClassName = format === "rectangle" ? `ds-spoc-rectangle` : ``;
+    const isMediumRectangle = format === "rectangle";
+    const spocFormatClassName = isMediumRectangle ? `ds-spoc-rectangle` : ``;
+    let sizes = [];
+    if (!isMediumRectangle) {
+      sizes = isListCard ? this.listCardImageSizes : this.dsImageSizes;
+    }
     let stpButton = () => {
       return /*#__PURE__*/external_React_default().createElement("button", {
         className: "card-stp-button",
@@ -3418,9 +3437,9 @@ class _DSCard extends (external_React_default()).PureComponent {
       })));
     };
     return /*#__PURE__*/external_React_default().createElement("article", {
-      className: `ds-card ${listCardClassName} ${fakespotClassName} ${compactImagesClassName} ${imageGradientClassName} ${titleLinesName} ${descLinesClassName} ${spocFormatClassName} ${ctaButtonClassName} ${ctaButtonVariantClassName}`,
+      className: `ds-card ${listCardClassName} ${fakespotClassName} ${sectionsCardsClassName}  ${compactImagesClassName} ${imageGradientClassName} ${titleLinesName} ${descLinesClassName} ${spocFormatClassName} ${ctaButtonClassName} ${ctaButtonVariantClassName}`,
       ref: this.setContextMenuButtonHostRef
-    }, this.props.showTopics && this.props.topic && !isListCard && /*#__PURE__*/external_React_default().createElement("span", {
+    }, this.props.showTopics && !this.props.mayHaveSectionsCards && this.props.topic && !isListCard && /*#__PURE__*/external_React_default().createElement("span", {
       className: "ds-card-topic",
       "data-l10n-id": `newtab-topic-label-${this.props.topic}`
     }), /*#__PURE__*/external_React_default().createElement("div", {
@@ -3429,7 +3448,7 @@ class _DSCard extends (external_React_default()).PureComponent {
       extraClassNames: "img",
       source: this.props.image_src,
       rawSource: this.props.raw_image_src,
-      sizes: isListCard ? this.listCardImageSizes : this.dsImageSizes,
+      sizes: sizes,
       url: this.props.url,
       title: this.props.title,
       isRecentSave: isRecentSave,
@@ -3488,11 +3507,14 @@ class _DSCard extends (external_React_default()).PureComponent {
       dispatch: this.props.dispatch,
       spocMessageVariant: this.props.spocMessageVariant,
       mayHaveThumbsUpDown: this.props.mayHaveThumbsUpDown,
+      mayHaveSectionsCards: this.props.mayHaveSectionsCards,
       onThumbsUpClick: this.onThumbsUpClick,
       onThumbsDownClick: this.onThumbsDownClick,
       state: this.state,
       isListCard: isListCard,
-      format: format
+      isSectionsCard: this.props.showTopics && this.props.mayHaveSectionsCards && this.props.topic && !isListCard,
+      format: format,
+      topic: this.props.topic
     }), /*#__PURE__*/external_React_default().createElement("div", {
       className: "card-stp-button-hover-background"
     }, /*#__PURE__*/external_React_default().createElement("div", {
@@ -3922,7 +3944,8 @@ function ListFeed({
       recommended_at: rec.recommended_at,
       received_rank: rec.received_rank,
       isListCard: true,
-      isFakespot: isFakespot
+      isFakespot: isFakespot,
+      category: rec.category
     });
   }), isFakespot && /*#__PURE__*/external_React_default().createElement("div", {
     className: "fakespot-footer"
@@ -3951,6 +3974,7 @@ function ListFeed({
 
 
 const PREF_ONBOARDING_EXPERIENCE_DISMISSED = "discoverystream.onboardingExperience.dismissed";
+const PREF_SECTIONS_CARDS_ENABLED = "discoverystream.sections.cards.enabled";
 const PREF_THUMBS_UP_DOWN_ENABLED = "discoverystream.thumbsUpDown.enabled";
 const PREF_TOPICS_ENABLED = "discoverystream.topicLabels.enabled";
 const PREF_TOPICS_SELECTED = "discoverystream.topicSelection.selectedTopics";
@@ -4231,6 +4255,7 @@ class _CardGrid extends (external_React_default()).PureComponent {
     } = DiscoveryStream;
     const showRecentSaves = prefs.showRecentSaves && recentSavesEnabled;
     const isOnboardingExperienceDismissed = prefs[PREF_ONBOARDING_EXPERIENCE_DISMISSED];
+    const mayHaveSectionsCards = prefs[PREF_SECTIONS_CARDS_ENABLED];
     const mayHaveThumbsUpDown = prefs[PREF_THUMBS_UP_DOWN_ENABLED];
     const showTopics = prefs[PREF_TOPICS_ENABLED];
     const selectedTopics = prefs[PREF_TOPICS_SELECTED];
@@ -4282,6 +4307,7 @@ class _CardGrid extends (external_React_default()).PureComponent {
         spocMessageVariant: spocMessageVariant,
         recommendation_id: rec.recommendation_id,
         firstVisibleTimestamp: this.props.firstVisibleTimestamp,
+        mayHaveSectionsCards: mayHaveSectionsCards,
         mayHaveThumbsUpDown: mayHaveThumbsUpDown,
         scheduled_corpus_item_id: rec.scheduled_corpus_item_id,
         recommended_at: rec.recommended_at,
@@ -10318,7 +10344,7 @@ class _CustomizeMenu extends (external_React_default()).PureComponent {
           this.props.onOpen();
         }
       },
-      "data-l10n-id": "newtab-personalize-icon-label",
+      "data-l10n-id": "newtab-personalize-settings-icon-label",
       ref: c => this.openButton = c
     })), /*#__PURE__*/external_React_default().createElement(external_ReactTransitionGroup_namespaceObject.CSSTransition, {
       timeout: 250,
@@ -10330,7 +10356,7 @@ class _CustomizeMenu extends (external_React_default()).PureComponent {
     }, /*#__PURE__*/external_React_default().createElement("div", {
       className: "customize-menu",
       role: "dialog",
-      "data-l10n-id": "newtab-personalize-dialog-label"
+      "data-l10n-id": "newtab-settings-dialog-label"
     }, /*#__PURE__*/external_React_default().createElement("div", {
       className: "close-button-wrapper"
     }, /*#__PURE__*/external_React_default().createElement("button", {

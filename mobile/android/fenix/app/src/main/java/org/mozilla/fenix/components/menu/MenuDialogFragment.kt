@@ -42,6 +42,7 @@ import mozilla.components.browser.state.selector.selectedTab
 import mozilla.components.concept.engine.translate.TranslationSupport
 import mozilla.components.concept.engine.translate.findLanguage
 import mozilla.components.lib.state.ext.observeAsState
+import mozilla.components.service.fxa.manager.AccountState.NotAuthenticated
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
 import mozilla.components.support.ktx.android.util.dpToPx
 import mozilla.components.support.ktx.android.view.setNavigationBarColorCompat
@@ -55,7 +56,6 @@ import org.mozilla.fenix.components.components
 import org.mozilla.fenix.components.menu.compose.CustomTabMenu
 import org.mozilla.fenix.components.menu.compose.ExtensionsSubmenu
 import org.mozilla.fenix.components.menu.compose.MainMenu
-import org.mozilla.fenix.components.menu.compose.MainMenuWithCFR
 import org.mozilla.fenix.components.menu.compose.MenuDialogBottomSheet
 import org.mozilla.fenix.components.menu.compose.SaveSubmenu
 import org.mozilla.fenix.components.menu.compose.ToolsSubmenu
@@ -80,6 +80,7 @@ import org.mozilla.fenix.utils.enterMenu
 import org.mozilla.fenix.utils.enterSubmenu
 import org.mozilla.fenix.utils.exitMenu
 import org.mozilla.fenix.utils.exitSubmenu
+import org.mozilla.fenix.utils.slideDown
 
 // EXPANDED_MIN_RATIO is used for BottomSheetBehavior.halfExpandedRatio().
 // That value needs to be less than the PEEK_HEIGHT.
@@ -133,6 +134,8 @@ class MenuDialogFragment : BottomSheetDialogFragment() {
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         bottomSheetBehavior.maxWidth = calculateMenuSheetWidth()
+        bottomSheetBehavior.maxHeight =
+            resources.displayMetrics.heightPixels - EXPANDED_OFFSET.dpToPx(resources.displayMetrics)
     }
 
     @Suppress("LongMethod", "CyclomaticComplexMethod")
@@ -159,6 +162,8 @@ class MenuDialogFragment : BottomSheetDialogFragment() {
 
                 MenuDialogBottomSheet(
                     handlebarContentDescription = handlebarContentDescription,
+                    appStore = components.appStore,
+                    context = context,
                     onRequestDismiss = { dismiss() },
                 ) {
                     val appStore = components.appStore
@@ -395,69 +400,100 @@ class MenuDialogFragment : BottomSheetDialogFragment() {
                                 handlebarContentDescription =
                                     context.getString(R.string.browser_main_menu_handlebar_content_description)
 
-                                if (settings.shouldShowMenuCFR) {
-                                    MainMenuWithCFR(
-                                        accessPoint = args.accesspoint,
-                                        store = store,
-                                        syncStore = syncStore,
-                                        installedAddons = installedAddons,
-                                        showQuitMenu = settings.shouldDeleteBrowsingDataOnQuit,
-                                        isPrivate = browsingModeManager.mode.isPrivate,
-                                        isDesktopMode = isDesktopMode,
-                                        isPdf = isPdf,
-                                        isTranslationSupported = isTranslationSupported,
-                                        isExtensionsProcessDisabled = isExtensionsProcessDisabled,
-                                        onExtensionsMenuClick = {
-                                            if (!isExtensionsProcessDisabled) {
-                                                contentState = Route.ExtensionsMenu
-                                                Events.browserMenuAction.record(
-                                                    Events.BrowserMenuActionExtra(
-                                                        item = "extensions_submenu",
-                                                    ),
-                                                )
-                                            } else {
-                                                store.dispatch(MenuAction.Navigate.ManageExtensions)
-                                            }
-                                        },
-                                        onSaveMenuClick = {
-                                            contentState = Route.SaveMenu
-                                        },
-                                        onToolsMenuClick = {
-                                            contentState = Route.ToolsMenu
-                                        },
-                                    )
-                                } else {
-                                    MainMenu(
-                                        accessPoint = args.accesspoint,
-                                        store = store,
-                                        syncStore = syncStore,
-                                        installedAddons = installedAddons,
-                                        showQuitMenu = settings.shouldDeleteBrowsingDataOnQuit,
-                                        isPrivate = browsingModeManager.mode.isPrivate,
-                                        isDesktopMode = isDesktopMode,
-                                        isPdf = isPdf,
-                                        isTranslationSupported = isTranslationSupported,
-                                        isExtensionsProcessDisabled = isExtensionsProcessDisabled,
-                                        onExtensionsMenuClick = {
-                                            if (!isExtensionsProcessDisabled) {
-                                                contentState = Route.ExtensionsMenu
-                                                Events.browserMenuAction.record(
-                                                    Events.BrowserMenuActionExtra(
-                                                        item = "extensions_submenu",
-                                                    ),
-                                                )
-                                            } else {
-                                                store.dispatch(MenuAction.Navigate.ManageExtensions)
-                                            }
-                                        },
-                                        onSaveMenuClick = {
-                                            contentState = Route.SaveMenu
-                                        },
-                                        onToolsMenuClick = {
-                                            contentState = Route.ToolsMenu
-                                        },
-                                    )
+                                val account by syncStore.observeAsState(initialValue = null) { state -> state.account }
+                                val accountState by syncStore.observeAsState(initialValue = NotAuthenticated) { state ->
+                                    state.accountState
                                 }
+
+                                MainMenu(
+                                    accessPoint = args.accesspoint,
+                                    account = account,
+                                    accountState = accountState,
+                                    installedAddons = installedAddons,
+                                    isPrivate = browsingModeManager.mode.isPrivate,
+                                    isDesktopMode = isDesktopMode,
+                                    showQuitMenu = settings.shouldDeleteBrowsingDataOnQuit,
+                                    isPdf = isPdf,
+                                    isTranslationSupported = isTranslationSupported,
+                                    isExtensionsProcessDisabled = isExtensionsProcessDisabled,
+                                    onMozillaAccountButtonClick = {
+                                        view?.slideDown {
+                                            store.dispatch(
+                                                MenuAction.Navigate.MozillaAccount(
+                                                    accountState = accountState,
+                                                    accesspoint = args.accesspoint,
+                                                ),
+                                            )
+                                        }
+                                    },
+                                    onHelpButtonClick = {
+                                        store.dispatch(MenuAction.Navigate.Help)
+                                    },
+                                    onSettingsButtonClick = {
+                                        view?.slideDown {
+                                            store.dispatch(MenuAction.Navigate.Settings)
+                                        }
+                                    },
+                                    onNewTabMenuClick = {
+                                        store.dispatch(MenuAction.Navigate.NewTab)
+                                    },
+                                    onNewPrivateTabMenuClick = {
+                                        store.dispatch(MenuAction.Navigate.NewPrivateTab)
+                                    },
+                                    onSwitchToDesktopSiteMenuClick = {
+                                        if (isDesktopMode) {
+                                            store.dispatch(MenuAction.RequestMobileSite)
+                                        } else {
+                                            store.dispatch(MenuAction.RequestDesktopSite)
+                                        }
+                                    },
+                                    onFindInPageMenuClick = {
+                                        store.dispatch(MenuAction.FindInPage)
+                                    },
+                                    onToolsMenuClick = {
+                                        contentState = Route.ToolsMenu
+                                    },
+                                    onSaveMenuClick = {
+                                        contentState = Route.SaveMenu
+                                    },
+                                    onExtensionsMenuClick = {
+                                        contentState = Route.ExtensionsMenu
+                                        Events.browserMenuAction.record(
+                                            Events.BrowserMenuActionExtra(
+                                                item = "extensions_submenu",
+                                            ),
+                                        )
+                                    },
+                                    onBookmarksMenuClick = {
+                                        view?.slideDown {
+                                            store.dispatch(MenuAction.Navigate.Bookmarks)
+                                        }
+                                    },
+                                    onHistoryMenuClick = {
+                                        view?.slideDown {
+                                            store.dispatch(MenuAction.Navigate.History)
+                                        }
+                                    },
+                                    onDownloadsMenuClick = {
+                                        view?.slideDown {
+                                            store.dispatch(MenuAction.Navigate.Downloads)
+                                        }
+                                    },
+                                    onPasswordsMenuClick = {
+                                        view?.slideDown {
+                                            store.dispatch(MenuAction.Navigate.Passwords)
+                                        }
+                                    },
+                                    onCustomizeHomepageMenuClick = {
+                                        store.dispatch(MenuAction.Navigate.CustomizeHomepage)
+                                    },
+                                    onNewInFirefoxMenuClick = {
+                                        store.dispatch(MenuAction.Navigate.ReleaseNotes)
+                                    },
+                                    onQuitMenuClick = {
+                                        store.dispatch(MenuAction.DeleteBrowsingDataAndQuit)
+                                    },
+                                )
                             }
 
                             Route.CustomTabMenu -> {
@@ -612,10 +648,14 @@ class MenuDialogFragment : BottomSheetDialogFragment() {
                                         store.dispatch(MenuAction.Navigate.ExtensionsLearnMore)
                                     },
                                     onManageExtensionsMenuClick = {
-                                        store.dispatch(MenuAction.Navigate.ManageExtensions)
+                                        view?.slideDown {
+                                            store.dispatch(MenuAction.Navigate.ManageExtensions)
+                                        }
                                     },
                                     onAddonClick = { addon ->
-                                        store.dispatch(MenuAction.Navigate.AddonDetails(addon = addon))
+                                        view?.slideDown {
+                                            store.dispatch(MenuAction.Navigate.AddonDetails(addon = addon))
+                                        }
                                     },
                                     onInstallAddonClick = { addon ->
                                         store.dispatch(MenuAction.InstallAddon(addon = addon))

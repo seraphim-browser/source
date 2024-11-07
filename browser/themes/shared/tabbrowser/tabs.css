@@ -27,8 +27,9 @@
   --tab-shadow-max-size: 6px;
   --tab-block-margin: 4px;
   --tab-icon-end-margin: 5.5px;
-  --tab-icon-overlay-fill: light-dark(black, white);
-  --tab-icon-overlay-stroke: light-dark(white, black);
+  --tab-icon-overlay-fill: light-dark(white, black);
+  --tab-icon-overlay-stroke: light-dark(black, white);
+  --tab-label-line-height: 1.7;
   --tab-loading-fill: #0A84FF;
   --tab-hover-background-color: color-mix(in srgb, currentColor 11%, transparent);
   --tab-selected-textcolor: var(--toolbar-color);
@@ -102,7 +103,7 @@
 /* stylelint-disable-next-line media-query-no-invalid */
 @media (-moz-bool-pref: "sidebar.verticalTabs") {
   :root {
-    --tab-min-height: 32px;
+    --tab-min-height: max(32px, calc(var(--tab-label-line-height) * 1em));
     --tab-block-margin: 2px;
   }
 }
@@ -502,7 +503,6 @@
       background-color: var(--tab-icon-overlay-stroke);
       background-position: center;
       background-repeat: no-repeat;
-      border: 0.5px solid var(--tab-icon-overlay-fill);
       border-radius: 10px;
       -moz-context-properties: fill;
       fill: var(--tab-icon-overlay-fill);
@@ -532,6 +532,13 @@
     &:hover:active {
       background-color: color-mix(in srgb, currentColor 30%, transparent);
     }
+
+    &:is([soundplaying], [muted], [activemedia-blocked]) {
+      &:hover,
+      &:hover:active {
+        background-color: color-mix(in srgb, currentColor 50%, transparent);
+      }
+    }
   }
 
   :is(
@@ -547,7 +554,7 @@
 .tab-label-container {
   overflow: hidden;
 
-  #tabbrowser-tabs:not([secondarytext-unsupported]) & {
+  #tabbrowser-tabs:not([secondarytext-unsupported], [orient=vertical]) & {
     height: 2.7em;
   }
 
@@ -572,7 +579,7 @@
 
 .tab-label {
   margin-inline: 0;
-  line-height: 1.7;  /* override 'normal' in case of fallback math fonts with huge metrics */
+  line-height: var(--tab-label-line-height);  /* override 'normal' in case of fallback math fonts with huge metrics */
   white-space: nowrap;
 }
 
@@ -690,7 +697,7 @@
 /* Keyboard focus outline */
 
 #TabsToolbar #firefox-view-button:focus-visible > .toolbarbutton-icon,
-.tabbrowser-tab:is(.keyboard-focused-tab, :focus:not([aria-activedescendant])) > .tab-stack > .tab-background {
+#tabbrowser-tabs[tablist-has-focus] .tabbrowser-tab.tablist-keyboard-focus > .tab-stack > .tab-background {
   outline: var(--focus-outline);
   outline-offset: var(--focus-outline-inset);
 }
@@ -698,11 +705,16 @@
 /* Pinned tabs */
 
 .tabbrowser-tab:is([image], [pinned]) > .tab-stack > .tab-content[attention]:not([selected]),
-.tabbrowser-tab > .tab-stack > .tab-content[pinned][titlechanged]:not([selected]) {
+.tabbrowser-tab > .tab-stack > .tab-content[pinned][titlechanged]:not([selected]),
+#tabbrowser-tabs[orient="vertical"]:not([expanded]) .tabbrowser-tab > .tab-stack > .tab-content[titlechanged]:not([selected]) {
   background-image: radial-gradient(circle, var(--attention-dot-color), var(--attention-dot-color) 2px, transparent 2px);
   background-position: center bottom 6.5px;
   background-size: 4px 4px;
   background-repeat: no-repeat;
+
+  #tabbrowser-tabs[orient="vertical"] & {
+    background-position-y: bottom 4px;
+  }
 }
 
 .tabbrowser-tab[image] > .tab-stack > .tab-content[attention]:not([pinned], [selected]) {
@@ -710,6 +722,13 @@
 
   &:-moz-locale-dir(rtl) {
     background-position-x: right 14px;
+  }
+  #tabbrowser-tabs[orient="vertical"] & {
+    background-position-x: left 22.5px;
+
+    &:-moz-locale-dir(rtl) {
+      background-position-x: right 22.5px;
+    }
   }
 }
 
@@ -798,6 +817,11 @@ tab-group {
   color: light-dark(var(--tab-group-color-pale), ButtonText);
   background-color: light-dark(var(--tab-group-color), var(--tab-group-color-invert));
   margin: auto 0;
+
+  #tabbrowser-tabs[tablist-has-focus] &.tablist-keyboard-focus {
+    outline: var(--focus-outline);
+    outline-offset: var(--focus-outline-offset);
+  }
 
   tab-group[collapsed] > .tab-group-label-container > & {
     background-color: light-dark(var(--tab-group-color-pale), var(--tab-group-color));
@@ -1024,6 +1048,7 @@ tab-group {
 #vertical-tabs-newtab-button {
   appearance: none;
   min-height: var(--tab-min-height);
+  line-height: var(--tab-label-line-height);
   border-radius: var(--border-radius-medium);
   padding: 0 calc(var(--tab-inline-padding) - var(--tab-inner-inline-margin));
   width: var(--tab-collapsed-background-width);
@@ -1157,7 +1182,6 @@ tab-group {
   .tab-background {
     border-radius: var(--border-radius-medium);
     margin-inline: var(--tab-inner-inline-margin);
-    height: var(--tab-min-height);
   }
 
   .tab-close-button {

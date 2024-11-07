@@ -138,14 +138,15 @@ def lint(paths, config, log, **lintargs):
 
         # Don't fix warnings to limit unrelated changes sneaking into patches.
         fix_args.append(f"--extend-ignore={','.join(warning_rules)}")
+        log.debug(f"Running --fix: {fix_args}")
         output = run_process(config, fix_args, **process_kwargs)
         matches = re.match(r"Fixed (\d+) errors?.", output)
         if matches:
             fixed = int(matches[1])
-
+    args += ["--output-format=json"]
     log.debug(f"Running with args: {args}")
 
-    output = run_process(config, args + ["--format=json"], **process_kwargs)
+    output = run_process(config, args, **process_kwargs)
     if not output:
         return []
 

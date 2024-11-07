@@ -2157,7 +2157,10 @@ void nsCocoaWindow::SetMenuBar(RefPtr<nsMenuBarX>&& aMenuBar) {
   if (mMenuBar && ((!gSomeMenuBarPainted &&
                     nsMenuUtilsX::GetHiddenWindowMenuBar() == mMenuBar) ||
                    mWindow.isMainWindow)) {
-    mMenuBar->Paint();
+    // We dispatch this in order to prevent crashes when macOS is actively
+    // enumerating the menu items in `NSApp.mainMenu`.
+    NS_DispatchToCurrentThread(NS_NewRunnableFunction(
+        "PaintMenuBar", [menuBar = mMenuBar] { menuBar->Paint(); }));
   }
 }
 
@@ -2832,6 +2835,37 @@ void nsCocoaWindow::CocoaWindowDidResize() {
     return;
   }
   mGeckoWindow->CocoaWindowDidEnterFullscreen(false);
+}
+
+- (void)windowDidFailToEnterFullScreen:(NSNotification*)notification {
+  if (!mGeckoWindow) {
+    return;
+  }
+
+  MOZ_ASSERT((mGeckoWindow->GetCocoaWindow().styleMask &
+              NSWindowStyleMaskFullScreen) == 0);
+  MOZ_ASSERT(mGeckoWindow->SizeMode() == nsSizeMode_Fullscreen);
+
+  // We're in a strange situation. We've told DOM that we are going to
+  // fullscreen by changing our size mode, and therefore the window
+  // content is what we would show if we were properly in fullscreen.
+  // But the window is actually in a windowed style. We have to do
+  // several things:
+  // 1) Clear sWindowInNativeTransition and mTransitionCurrent, both set
+  //    when we started the fullscreen transition.
+  // 2) Change our size mode to windowed.
+  // Conveniently, we can do these things by pretending we just arrived
+  // at windowed mode, and all will be sorted out.
+  mGeckoWindow->CocoaWindowDidEnterFullscreen(false);
+}
+
+- (void)windowDidFailToExitFullScreen:(NSNotification*)notification {
+  if (!mGeckoWindow) {
+    return;
+  }
+  // Similarly to windowDidFailToEnterFullScreen, we can get the right
+  // result by pretending we just entered fullscreen.
+  mGeckoWindow->CocoaWindowDidEnterFullscreen(true);
 }
 
 - (void)windowDidBecomeMain:(NSNotification*)aNotification {
