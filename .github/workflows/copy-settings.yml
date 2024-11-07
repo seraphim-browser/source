@@ -1,0 +1,42 @@
+name: Apply Custom Settings for Seraphim
+
+on:
+  push:
+    branches:
+      - main # Applies settings automatically whenever there is a push to main
+
+jobs:
+  copy-files: 
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v3
+        with:
+          repository: https://github.com/seraphim-browser/settings
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: source
+      
+      - name: Checkout target repository
+        uses: actions/checkout@v3
+        with:
+          repository: https://github.com/seraphim-browser/source
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: target
+
+      - name: Copy files
+        run: 
+          cp source/seraphim.cfg target/
+          cp -R source/defaults/pref/ target/defaults/pref/
+          cp -R source/distribution target/distribution
+
+      - name: Commit and push changes
+        run:
+          cd target
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Sync files from <source-repo> to <target-repo>"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
