@@ -70,7 +70,7 @@ jobs:
       - name: Checkout the target repository (where the build will be stored)
         uses: actions/checkout@v3
         with:
-          repository: seraphim-browser/build  
+          repository: seraphim-browser/browser  
           token: ${{ secrets.GITHUB_TOKEN }}
           path: target-repository  # Folder to check out the target repo into
 
