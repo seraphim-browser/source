@@ -223,7 +223,8 @@ class nsRFPService final : public nsIObserver, public nsIRFPService {
       bool aIsPrivateMode, RFPTarget aTarget,
       const Maybe<RFPTarget>& aOverriddenFingerprintingSettings);
 
-  static bool IsSoftwareRenderingOptionExposed(JSContext*, JSObject*);
+  static bool IsSystemPrincipalOrAboutFingerprintingProtection(JSContext*,
+                                                               JSObject*);
 
   // --------------------------------------------------------------------------
   static double TimerResolution(RTPCallerType aRTPCallerType);
@@ -397,6 +398,9 @@ class nsRFPService final : public nsIObserver, public nsIRFPService {
 
   // Returns the default pixel density for RFP.
   static float GetDefaultPixelDensity();
+
+  // Returns the device pixel ratio at the given zoom level.
+  static double GetDevicePixelRatioAtZoom(float aZoom);
 
  private:
   nsresult Init();

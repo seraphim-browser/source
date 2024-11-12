@@ -822,6 +822,11 @@
   value: 0.1f
   mirror: always
 
+- name: apz.touch_scroll.buffer_max_age
+  type: int32_t
+  value: 200  # milliseconds
+  mirror: once
+
 - name: apz.touch_start_tolerance
   type: AtomicFloat
   value: 0.1f
@@ -1597,7 +1602,7 @@
 
 - name: browser.navigation.requireUserInteraction
   type: bool
-  value: true
+  value: @IS_EARLY_BETA_OR_EARLIER@
   mirror: always
 
 # Indicates if about:newtab shows content (enabled) or just blank.
@@ -3126,7 +3131,7 @@
 
 - name: dom.ipc.processPriorityManager.backgroundPerceivableGracePeriodMS
   type: uint32_t
-#if defined(MOZ_WIDGET_ANDROID) && defined(NIGHTLY_BUILD)
+#if defined(MOZ_WIDGET_ANDROID)
   value: 3000
 #else
   value: 0
@@ -3135,7 +3140,7 @@
 
 - name: dom.ipc.processPriorityManager.backgroundGracePeriodMS
   type: uint32_t
-#if defined(MOZ_WIDGET_ANDROID) && defined(NIGHTLY_BUILD)
+#if defined(MOZ_WIDGET_ANDROID)
   value: 3000
 #else
   value: 0
@@ -8277,8 +8282,16 @@
     mirror: always
     set_spidermonkey_pref: startup
 
-
 #endif  // NIGHTLY_BUILD
+
+#ifdef ENABLE_EXPLICIT_RESOURCE_MANAGEMENT
+  # Experimental support for Explicit Resource Management in JavaScript.
+-   name: javascript.options.experimental.explicit_resource_management
+    type: bool
+    value: false
+    mirror: always
+    set_spidermonkey_pref: always
+#endif  // ENABLE_EXPLICIT_RESOURCE_MANAGEMENT
 
 -   name: javascript.options.experimental.json_parse_with_source
     type: bool
@@ -11196,11 +11209,7 @@
 # 2 : enable for media engine only
 -   name: media.wmf.hevc.enabled
     type: RelaxedAtomicUint32
-#if defined(NIGHTLY_BUILD)
     value: 1
-#else
-    value: 2
-#endif
     mirror: always
 
 # Enable Widevine experiment DRM for EME
@@ -13905,9 +13914,10 @@
 # This pref controls whether to send the
 # SETTINGS_NO_RFC7540_PRIORITIES when stream dependencies
 # are disabled, and extensible prioritization scheme is in use.
+# defaults to false as some servers panic when they see this (bug 1928600)
 - name: network.http.http2.send_NO_RFC7540_PRI
   type: RelaxedAtomicBool
-  value: true
+  value: false
   mirror: always
 
 # This pref controls whether to send PRIORITY_UPDATE

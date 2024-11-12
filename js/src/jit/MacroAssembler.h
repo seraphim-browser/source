@@ -3989,7 +3989,7 @@ class MacroAssembler : public MacroAssemblerSpecific {
       DEFINED_ON(x86_shared, arm, arm64, loong64, mips64, riscv64);
 
 #ifdef ENABLE_WASM_MEMORY64
-  void wasmClampTable64Index(Register64 index, Register out);
+  void wasmClampTable64Address(Register64 address, Register out);
 #endif
 
   // WasmTableCallIndexReg must contain the index of the indirect call.  This is
@@ -5512,11 +5512,11 @@ class MacroAssembler : public MacroAssemblerSpecific {
   enum class IsBigInt { No, Yes, Maybe };
 
   /**
-   * Search for a value in a OrderedHashTable.
+   * Search for a value in a MapObject or SetObject.
    *
    * When we jump to |found|, |entryTemp| holds the found hashtable entry.
    */
-  template <typename OrderedHashTable>
+  template <typename TableObject>
   void orderedHashTableLookup(Register setOrMapObj, ValueOperand value,
                               Register hash, Register entryTemp, Register temp1,
                               Register temp3, Register temp4, Register temp5,
@@ -5592,7 +5592,7 @@ class MacroAssembler : public MacroAssemblerSpecific {
   }
 
  private:
-  template <typename OrderedHashTable>
+  template <typename TableObject>
   void loadOrderedHashTableCount(Register setOrMapObj, Register result);
 
  public:
